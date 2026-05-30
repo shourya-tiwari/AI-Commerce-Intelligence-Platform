@@ -7,6 +7,11 @@ venv/
 .ipynb_checkpoints/
 
 models/*.pkl
+models/*.joblib
+
+reports/*.html
+reports/*.csv
+reports/*.xlsx
 
 data/processed/
 
