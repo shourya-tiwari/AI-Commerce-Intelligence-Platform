@@ -18,3 +18,5 @@ data/processed/
 .streamlit/
 
 .DS_Store
+
+test.py
