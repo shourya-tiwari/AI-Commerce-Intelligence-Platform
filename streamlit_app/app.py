@@ -41,18 +41,9 @@ customer_df["persona"] = (
 # HEADER
 # ====================================================
 
-col1, col2 = st.columns([1, 6])
-
-with col1:
-    st.image(
-        "streamlit_app/assets/logo.png",
-        width=100
-    )
-
-with col2:
-    st.title(
-        "AI Commerce Intelligence Platform"
-    )
+st.title(
+    "🛒 AI Commerce Intelligence Platform"
+)
 
 st.markdown("""
 ### End-to-End Customer Intelligence Dashboard
@@ -197,7 +188,7 @@ fig = px.bar(
 
 st.plotly_chart(
     fig,
-    use_container_width=True
+    width="stretch"
 )
 
 # ====================================================
@@ -227,7 +218,7 @@ persona_df = pd.DataFrame({
 
 st.dataframe(
     persona_df,
-    use_container_width=True
+    width="stretch"
 )
 
 st.divider()
@@ -260,7 +251,7 @@ fig = px.bar(
 
 st.plotly_chart(
     fig,
-    use_container_width=True
+    width="stretch"
 )
 
 # ====================================================
@@ -283,7 +274,7 @@ leaderboard = (
 
 st.dataframe(
     leaderboard,
-    use_container_width=True
+    width="stretch"
 )
 
 st.divider()
@@ -298,7 +289,7 @@ st.subheader(
 
 st.dataframe(
     cluster_df,
-    use_container_width=True
+    width="stretch"
 )
 
 # ====================================================
