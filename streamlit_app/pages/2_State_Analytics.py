@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import plotly.express as px
 
 from utils.data_loader import load_customer_data
@@ -12,7 +11,16 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🌎 State-wise Customer Analytics")
+st.title("🌎 State-wise Analytics")
+
+metric = st.selectbox(
+    "Select Metric",
+    [
+        "monetary_value",
+        "avg_review_score",
+        "frequency"
+    ]
+)
 
 state_summary = (
     customer_df
@@ -23,15 +31,6 @@ state_summary = (
         "frequency":"mean"
     })
     .reset_index()
-)
-
-metric = st.selectbox(
-    "Select Metric",
-    [
-        "monetary_value",
-        "avg_review_score",
-        "frequency"
-    ]
 )
 
 fig = px.bar(
@@ -47,6 +46,12 @@ fig = px.bar(
 st.plotly_chart(
     fig,
     use_container_width=True
+)
+
+st.divider()
+
+st.subheader(
+    "State Statistics"
 )
 
 st.dataframe(

@@ -1,23 +1,19 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="SHAP Explainability",
+    page_title="Explainable AI",
     page_icon="🧠",
     layout="wide"
 )
 
-st.title("🧠 SHAP Explainability")
+st.title("🧠 Explainable AI")
 
-st.markdown(
-    """
-    Explainable AI analysis showing
-    the most important factors driving
-    customer value.
-    """
-)
+st.markdown("""
+Understanding the factors that drive customer value using SHAP Explainability.
+""")
 
 st.subheader(
-    "SHAP Feature Importance"
+    "Feature Importance"
 )
 
 st.image(
@@ -39,17 +35,30 @@ st.image(
 st.divider()
 
 st.subheader(
-    "Key Insights"
+    "Business Interpretation"
 )
 
-st.success(
-    """
-    • Cluster membership is the strongest predictor of customer value
+col1, col2 = st.columns(2)
 
-    • Freight cost is strongly associated with higher spending
+with col1:
 
-    • Basket size contributes significantly to customer value
+    st.success("""
+    Cluster membership is the strongest predictor
+    of customer value.
+    """)
 
-    • Review scores have relatively low impact on customer value
-    """
-)
+    st.success("""
+    VIP customers contribute the most revenue.
+    """)
+
+with col2:
+
+    st.success("""
+    Freight cost is strongly associated with
+    customer spending.
+    """)
+
+    st.success("""
+    Review scores have relatively low impact
+    on customer value.
+    """)
