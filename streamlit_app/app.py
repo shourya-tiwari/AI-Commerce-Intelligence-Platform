@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# ==========================================
+from utils.data_loader import load_customer_data
+
+# ====================================================
 # PAGE CONFIG
-# ==========================================
+# ====================================================
 
 st.set_page_config(
     page_title="AI Commerce Intelligence Platform",
@@ -11,28 +14,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==========================================
+# ====================================================
 # LOAD DATA
-# ==========================================
+# ====================================================
 
-@st.cache_data
-def load_data():
-    customer_df = pd.read_csv(
-        "data/processed/customer_segments.csv"
-    )
+filtered_df, cluster_df = load_customer_data()
 
-    cluster_df = pd.read_csv(
-        "data/processed/cluster_profiles.csv"
-    )
-
-    return customer_df, cluster_df
-
-
-customer_df, cluster_df = load_data()
-
-# ==========================================
+# ====================================================
 # SIDEBAR
-# ==========================================
+# ====================================================
 
 st.sidebar.title("🛒 AI Commerce Intelligence")
 
@@ -46,9 +36,9 @@ page = st.sidebar.radio(
     ]
 )
 
-# ==========================================
+# ====================================================
 # OVERVIEW
-# ==========================================
+# ====================================================
 
 if page == "Overview":
 
@@ -56,32 +46,37 @@ if page == "Overview":
 
     st.markdown(
         """
-        ### End-to-End Customer Analytics using Machine Learning
+        End-to-End Customer Intelligence System built using:
 
-        This platform provides:
-        - Customer Segmentation
-        - Business Intelligence
-        - Customer Personas
-        - Revenue Insights
-        - Explainable AI Findings
+        - Feature Engineering
+        - PCA
+        - KMeans Clustering
+        - SHAP Explainability
+        - Business Analytics
         """
     )
 
-    total_customers = len(customer_df)
+    total_customers = len(filtered_df)
 
-    total_revenue = customer_df[
+    total_revenue = filtered_df[
         "monetary_value"
     ].sum()
 
-    avg_revenue = customer_df[
+    avg_revenue = filtered_df[
         "monetary_value"
     ].mean()
 
-    avg_review = customer_df[
+    avg_review = filtered_df[
         "avg_review_score"
     ].mean()
 
-    col1, col2, col3, col4 = st.columns(4)
+    repeat_rate = (
+        (filtered_df["frequency"] > 1)
+        .mean()
+        * 100
+    )
+
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric(
         "Customers",
@@ -90,12 +85,12 @@ if page == "Overview":
 
     col2.metric(
         "Revenue",
-        f"₹{total_revenue:,.0f}"
+        f"{total_revenue:,.0f}"
     )
 
     col3.metric(
         "Avg Spend",
-        f"₹{avg_revenue:.2f}"
+        f"{avg_revenue:.2f}"
     )
 
     col4.metric(
@@ -103,41 +98,84 @@ if page == "Overview":
         f"{avg_review:.2f}"
     )
 
+    col5.metric(
+        "Repeat Rate",
+        f"{repeat_rate:.2f}%"
+    )
+
     st.divider()
 
-    st.subheader("Project Summary")
+    st.subheader("Key Findings")
 
-    st.write(
+    st.info(
         """
-        This project analyzes customer behavior using
-        advanced machine learning techniques including:
+        • More than 96% of customers purchased only once
 
-        - PCA
-        - KMeans Clustering
-        - Customer Persona Discovery
-        - SHAP Explainability
+        • Customer segmentation identified 5 distinct personas
 
-        Built using the Olist Brazilian E-Commerce Dataset.
+        • Cluster membership is the strongest predictor of customer value
+
+        • Revenue is concentrated among a small VIP segment
+
+        • Delivery performance strongly affects customer satisfaction
         """
     )
 
-# ==========================================
+    st.download_button(
+        label="Download Customer Dataset",
+        data=filtered_df.to_csv(
+            index=False
+        ),
+        file_name="customer_segments.csv",
+        mime="text/csv"
+    )
+
+# ====================================================
 # CUSTOMER SEGMENTATION
-# ==========================================
+# ====================================================
 
 elif page == "Customer Segmentation":
 
     st.title("📊 Customer Segmentation")
 
     cluster_counts = (
-        customer_df["cluster"]
+        filtered_df["cluster"]
         .value_counts()
         .sort_index()
     )
 
-    st.subheader("Customer Distribution")
+    fig = px.bar(
+        x=cluster_counts.index,
+        y=cluster_counts.values,
+        labels={
+            "x": "Cluster",
+            "y": "Customers"
+        },
+        title="Customer Distribution by Cluster"
+    )
 
-    st.bar_chart(cluster_counts)
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.subheader("Customer Personas")
+
+    personas = {
+        0: "Loyal High Value Customers",
+        1: "Dissatisfied Customers",
+        2: "Budget Buyers",
+        3: "Failed Order Customers",
+        4: "VIP Customers"
+    }
+
+    for cluster, persona in personas.items():
+
+        st.markdown(
+            f"### Cluster {cluster}: {persona}"
+        )
+
+    st.divider()
 
     st.subheader("Cluster Profiles")
 
@@ -146,67 +184,94 @@ elif page == "Customer Segmentation":
         use_container_width=True
     )
 
-    st.subheader("Customer Personas")
-
-    personas = {
-        0: "Loyal High-Value Customers",
-        1: "Dissatisfied Customers",
-        2: "Budget Buyers",
-        3: "Failed Order Customers",
-        4: "VIP Customers"
-    }
-
-    persona_df = pd.DataFrame({
-        "Cluster": personas.keys(),
-        "Persona": personas.values()
-    })
-
-    st.table(persona_df)
-
-# ==========================================
+# ====================================================
 # BUSINESS INSIGHTS
-# ==========================================
+# ====================================================
 
 elif page == "Business Insights":
 
+    selected_clusters = st.multiselect(
+        "Select Clusters",
+        sorted(
+            filtered_df["cluster"]
+            .unique()
+        ),
+        default=sorted(
+            filtered_df["cluster"]
+            .unique()
+        )
+    )
+
+    filtered_df = filtered_df[
+        filtered_df["cluster"]
+        .isin(selected_clusters)
+    ]
+
     st.title("📈 Business Insights")
 
-    st.subheader("Average Revenue by Cluster")
-
     revenue = (
-        customer_df
+        filtered_df
         .groupby("cluster")
         ["monetary_value"]
         .mean()
+        .reset_index()
     )
 
-    st.bar_chart(revenue)
+    fig1 = px.bar(
+        revenue,
+        x="cluster",
+        y="monetary_value",
+        title="Average Revenue by Cluster"
+    )
 
-    st.subheader("Average Review Score by Cluster")
+    st.plotly_chart(
+        fig1,
+        use_container_width=True
+    )
 
     reviews = (
-        customer_df
+        filtered_df
         .groupby("cluster")
         ["avg_review_score"]
         .mean()
+        .reset_index()
     )
 
-    st.bar_chart(reviews)
+    fig2 = px.bar(
+        reviews,
+        x="cluster",
+        y="avg_review_score",
+        title="Average Review Score by Cluster"
+    )
 
-    st.subheader("Average Recency by Cluster")
+    st.plotly_chart(
+        fig2,
+        use_container_width=True
+    )
 
     recency = (
-        customer_df
+        filtered_df
         .groupby("cluster")
         ["recency_days"]
         .mean()
+        .reset_index()
     )
 
-    st.bar_chart(recency)
+    fig3 = px.bar(
+        recency,
+        x="cluster",
+        y="recency_days",
+        title="Average Recency by Cluster"
+    )
 
-# ==========================================
+    st.plotly_chart(
+        fig3,
+        use_container_width=True
+    )
+
+# ====================================================
 # CUSTOMER LOOKUP
-# ==========================================
+# ====================================================
 
 elif page == "Customer Lookup":
 
@@ -218,21 +283,24 @@ elif page == "Customer Lookup":
 
     if customer_id:
 
-        result = customer_df[
-            customer_df[
+        result = filtered_df[
+            filtered_df[
                 "customer_unique_id"
             ] == customer_id
         ]
 
         if not result.empty:
 
-            st.success("Customer Found")
-
             customer = result.iloc[0]
+
+            st.success(
+                "Customer Found"
+            )
 
             col1, col2 = st.columns(2)
 
             with col1:
+
                 st.metric(
                     "Cluster",
                     int(customer["cluster"])
@@ -252,14 +320,20 @@ elif page == "Customer Lookup":
                 )
 
             with col2:
+
                 st.metric(
                     "Monetary Value",
-                    f"₹{customer['monetary_value']:.2f}"
+                    round(
+                        customer["monetary_value"],
+                        2
+                    )
                 )
 
                 st.metric(
-                    "Recency Days",
-                    int(customer["recency_days"])
+                    "Recency",
+                    int(
+                        customer["recency_days"]
+                    )
                 )
 
                 st.metric(
@@ -278,6 +352,7 @@ elif page == "Customer Lookup":
             )
 
         else:
+
             st.error(
-                "Customer ID not found."
+                "Customer not found"
             )
